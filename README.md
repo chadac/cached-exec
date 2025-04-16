@@ -1,6 +1,30 @@
 # cached-exec
 
-Basic bash script to run commands with a cache.
+Basic bash script to run commands only when a reference set of files has changed.
+
+`cached-exec` simply runs the command; `cached-eval` stores the result and will
+print it from the cache if nothing has changed.
+
+tl;dr
+
+```bash
+> touch myfile.txt
+
+# first invocation will execute the command
+> cached-exec myfile.txt -- echo hello
+hello
+
+# next invocation will skip executing the command
+> cached-exec myfile.txt -- echo hello
+
+# same wil cached-eval
+> cached-eval myfile.txt -- echo hello
+hello
+
+# next invocation pulls the output of the command from the cache
+> cached-eval myfile.txt -- echo hello
+hello
+```
 
 ## Usage
 
