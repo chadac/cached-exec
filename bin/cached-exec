@@ -53,7 +53,7 @@ mkdir -p $CACHED_EXEC_ROOT
 
 expr_key=$CACHED_EXEC_ROOT/$(echo ${files[@]} $@ | sha256sum | awk '{print $1}')
 
-files_new_hash=`sha256sum ${files[@]} | sha256sum`
+files_new_hash=`sha256sum ${files[@]} | sha256sum | awk '{print $1}'`
 code=$?
 if ! [ "$code" -eq "0" ]; then
   exit $code
