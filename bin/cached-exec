@@ -6,8 +6,28 @@ set -o pipefail
 files=()
 FORCE_RELOAD_CACHE=1
 
+print_help() {
+  cat <<EOF
+usage: cached-exec [-f | --force] <files>... -- <command>
+
+Runs a command if a set of source files has changed.
+
+OPTIONS
+       <files>...
+            Set of files to use for controlling the cache.
+       <command>
+            Command to execute.
+        -f, --force
+            If specified, forces rerunning the command and updates the cache.
+EOF
+}
+
 while [[ $# -gt 0 ]]; do
   case $1 in
+    --help)
+      print_help
+      exit 0
+      ;;
     -f|--force)
       FORCE_RELOAD_CACHE=1
       shift
