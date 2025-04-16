@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+set -e
+set -o pipefail
+
+ARG=""
+EXPR=()
+FILES=()
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -e|--expr)
+      ARG="expr"
+      shift
+      ;;
+    -f|--files)
+      ARG="files"
+      shift
+      ;;
+    *)
+      case "$ARG" in
+        expr)
+          EXPR+=($1)
+          shift
+          ;;
+        files)
+          FILES+=($1)
+          shift
+          ;;
+        *)
+          >&2 echo "error: expecting option --expr or --files before arguments."
+          exit 1
+          ;;
+      esac
+  esac
+done
+
+CACHED_EXEC_ROOT=${CACHED_EXEC_ROOT:-$PWD/.cached-exec}
+mkdir -p $CACHED_EXEC_ROOT
+
+expr_key=$CACHED_EXEC_ROOT/$(echo ${EXPR[@]} | sha256sum | awk '{print $1}')
+
+files_new_hash=`sha256sum ${FILES[@]} | sha256sum`
+code=$?
+if ! [ "$code" -eq "0" ]; then
+  exit $code
+fi
+if [ -f "$expr_key" ] && [ -f "${expr_key}.eval" ]; then
+  files_old_hash="$(cat "$expr_key")"
+else
+  files_old_hash=""
+fi
+
+if ! [ "$files_new_hash" = "$files_old_hash" ]; then
+  eval "$EXPR"
+  echo $files_new_hash > $expr_key
+fi
