@@ -45,7 +45,7 @@ code=$?
 if ! [ "$code" -eq "0" ]; then
   exit $code
 fi
-if [ -f "$expr_key" ] && [ -f "${expr_key}.eval" ]; then
+if [ -f "$expr_key" ]; then
   files_old_hash="$(cat "$expr_key")"
 else
   files_old_hash=""
