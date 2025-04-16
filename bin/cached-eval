@@ -1,46 +1,40 @@
 #!/usr/bin/env bash
 
+
 set -e
 set -o pipefail
 
-ARG=""
-EXPR=()
-FILES=()
+files=()
+FORCE_RELOAD_CACHE=1
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    -e|--expr)
-      ARG="expr"
+    -f|--force)
+      FORCE_RELOAD_CACHE=1
       shift
       ;;
-    -f|--files)
-      ARG="files"
+    --)
       shift
+      break
       ;;
     *)
-      case "$ARG" in
-        expr)
-          EXPR+=($1)
-          shift
-          ;;
-        files)
-          FILES+=($1)
-          shift
-          ;;
-        *)
-          >&2 echo "error: expecting option --expr or --files before arguments."
-          exit 1
-          ;;
-      esac
+      files+=($1)
+      shift
+      ;;
   esac
 done
+
+if [ ${#files[@]} -eq 0 ]; then
+  >&2 echo "error: no files specified"
+  exit 1
+fi
 
 CACHED_EXEC_ROOT=${CACHED_EXEC_ROOT:-$PWD/.cached-exec}
 mkdir -p $CACHED_EXEC_ROOT
 
-expr_key=$CACHED_EXEC_ROOT/$(echo ${EXPR[@]} | sha256sum | awk '{print $1}')
+expr_key=$CACHED_EXEC_ROOT/$(echo ${files[@]} $@ | sha256sum | awk '{print $1}')
 
-files_new_hash=`sha256sum ${FILES[@]} | sha256sum`
+files_new_hash=`sha256sum ${files[@]} | sha256sum`
 code=$?
 if ! [ "$code" -eq "0" ]; then
   exit $code
@@ -51,10 +45,8 @@ else
   files_old_hash=""
 fi
 
-if [ "$files_new_hash" = "$files_old_hash" ]; then
-  cat "${expr_key}.eval"
-else
-  result=$(eval ${EXPR[@]})
+if [ "$files_new_hash" != "$files_old_hash" ] || [ $FORCE_RELOAD_CACHE -eq 1 ]; then
+  result=$(eval "$@")
   code=$?
   if ! [ "$code" -eq "0" ]; then
     exit $code
@@ -62,4 +54,6 @@ else
   echo "$files_new_hash" > $expr_key
   echo $result > "${expr_key}.eval"
   echo $result
+else
+  cat "${expr_key}.eval"
 fi
