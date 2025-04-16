@@ -5,7 +5,7 @@ set -e
 set -o pipefail
 
 files=()
-FORCE_RELOAD_CACHE=1
+FORCE_RELOAD_CACHE=0
 
 print_help() {
   cat <<EOF
@@ -68,7 +68,8 @@ else
   files_old_hash=""
 fi
 
-if [ "$files_new_hash" != "$files_old_hash" ] || [ $FORCE_RELOAD_CACHE -eq 1 ]; then
+if [ "$files_new_hash" != "$files_old_hash" ] || [ "$FORCE_RELOAD_CACHE" -eq 1 ]; then
+  >&2 echo "files changed, rerunning command"
   result=$(eval "$@")
   code=$?
   if ! [ "$code" -eq "0" ]; then

@@ -4,7 +4,7 @@ set -e
 set -o pipefail
 
 files=()
-FORCE_RELOAD_CACHE=1
+FORCE_RELOAD_CACHE=0
 
 print_help() {
   cat <<EOF
